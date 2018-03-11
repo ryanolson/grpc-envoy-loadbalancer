@@ -60,3 +60,16 @@ Greeter client received: Hello, you from host=114c199e6bdb!
 Greeter client received: Hello, you from host=114c199e6bdb!
 Greeter client received: Hello, you from host=114c199e6bdb!
 ```
+
+## Using EDS
+
+Modify `/config/active` by commenting out one of the `serviceX` endpoints.  Run `./update.sh`
+the proxy running.  This will update the `eds.yaml` created on startup and trigger an update
+such that only the hosts in the `active` file are included in the load-balancing`
+
+## Outlier Detection
+
+Added outlier detection to the `helloworld` cluster.  This will drop any endpoint if 5 consecutive 
+5xx are triggered.  For demo purposed, we may need to move that to 1.  Hosts will comeback into
+service when they are alive again on a linearly increasing backoff rate; truly dead hosts/endpoints
+should be ejected from the EDS list by the active health checker performed by the EDS.

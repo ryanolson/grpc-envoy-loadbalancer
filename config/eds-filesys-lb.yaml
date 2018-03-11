@@ -1,0 +1,59 @@
+static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 80
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        config:
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: backend
+              domains:
+              - "*"
+              routes:
+              - match:
+                  prefix: "/helloworld.Greeter/"
+#                 prefix: "/"
+                  headers:
+                  - name: content-type
+                    value: application/grpc
+                route:
+                  cluster: helloworld
+          http_filters:
+          - name: envoy.router
+            config: {}
+  clusters:
+  - name: helloworld
+    connect_timeout: 0.25s
+    lb_policy: round_robin
+    http2_protocol_options: {}
+    outlier_detection:
+      max_ejection_percent: 100
+#     base_ejection_time: 10000
+#   health_checks:
+#   - timeout:
+#       nanos: 100000000
+#     interval:
+#       seconds: 3
+#     interval_jitter:
+#       nanos: 500000000
+#     unhealthy_threshold: 1
+#     healthy_threshold: 2
+#     grpc_health_check: {}
+    type: EDS
+    eds_cluster_config:
+      eds_config:
+        path: "/config/eds.yaml"
+
+admin:
+  access_log_path: "/dev/null"
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 8001

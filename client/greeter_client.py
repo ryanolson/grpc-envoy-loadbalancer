@@ -23,10 +23,16 @@ import helloworld_pb2_grpc
 
 def run():
     channel = grpc.insecure_channel(os.environ.get("ADDRESS"))
-    for _ in range(10):
+    for i in range(1000):
         stub = helloworld_pb2_grpc.GreeterStub(channel)
-        response = stub.SayHello(helloworld_pb2.HelloRequest(name='you'))
-        print("Greeter client received: " + response.message)
+        try:
+            response = stub.SayHello(helloworld_pb2.HelloRequest(name='you'))
+            if i%200 in [0, 1]:
+                print("Greeter client received: " + response.message)
+        except:
+            if i%100 in [0, 1]:
+                print("Greeter client failed")
+            pass
 
 
 if __name__ == '__main__':

@@ -1,12 +1,14 @@
 version: '3'
 services:
 
-  front-envoy:
+  load-balancer:
     build:
-      context: ./frontend
+      context: ./load-balancer
       dockerfile: Dockerfile
     volumes:
-      - ./frontend/front-envoy.yaml:/etc/front-envoy.yaml
+      - ./config/eds-filesys-lb.yaml:/etc/lb.yaml:ro
+#     - ./config/static-lb.yaml:/etc/lb.yaml:ro
+      - ./config:/config
 #   networks:
 #     - envoymesh
     expose:
