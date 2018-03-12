@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import socket
@@ -24,6 +25,15 @@ def get_logger(name, level=None):
 
 
 log = get_logger(__name__)
+
+@contextlib.contextmanager
+def cd(path):
+    old_dir = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(old_dir)
 
 def valid_hostname(hostname):
     try:
@@ -100,13 +110,18 @@ class BaseDemoController:
             }],
         }
         log.info("writing new eds response:\n{}".format(pformat(eds_response, indent=2, width=120)))
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_eds = os.path.join(tmpdir, "eds.yaml")
-            dst_eds = os.path.join(os.path.dirname(self.eds_path), "new.yaml")
-            with open(tmp_eds, "w") as output:
-                yaml.dump(eds_response, output)
-            subprocess.run("mv -Tf {} {}".format(tmp_eds, dst_eds), shell=True, check=True)
-            #shutil.move(tmp_eds, self.eds_path) # envoy updates only triggered on a move
+        dst_eds = os.path.join(os.path.dirname(self.eds_path), "new.yaml")
+        with open(dst_eds, "w") as output:
+            yaml.dump(eds_response, output)
+        with cd(os.path.dirname(self.eds_path)):
+            shutil.move("new.yaml", os.path.basename(self.eds_path)) # envoy updates only triggered on a move
+#       with tempfile.TemporaryDirectory() as tmpdir:
+#           tmp_eds = os.path.join(tmpdir, "eds.yaml")
+#           dst_eds = os.path.join(os.path.dirname(self.eds_path), "new.yaml")
+#           with open(tmp_eds, "w") as output:
+#               yaml.dump(eds_response, output)
+#           subprocess.run("mv -Tf {} {}".format(tmp_eds, dst_eds), shell=True, check=True)
+#           #shutil.move(tmp_eds, self.eds_path) # envoy updates only triggered on a move
 
     def update_healthy(self):
         raise NotImplementedError()
