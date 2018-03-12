@@ -5,7 +5,10 @@ RUN apt-get update && apt-get -q install -y --no-install-recommends \
 
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install --upgrade setuptools && \
-    python3 -m pip install PyYAML
+    python3 -m pip install PyYAML click
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 WORKDIR /source/democontroller
 COPY . .

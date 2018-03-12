@@ -1,14 +1,18 @@
+#!/usr/bin/env python3
 import contextlib
 import logging
 import os
-import socket
+import sched
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
+import time
 
 from pprint import pformat
 
+import click
 import yaml
 
 
@@ -85,7 +89,6 @@ class BaseDemoController:
         unhealthy = self.active - healthy
         active = healthy.intersection(self.active)
         available = healthy - active
-        log.info("healthy: {}".format(healthy))
         if unhealthy:
             log.info("unheathy endpoints removed from active lb list: {}".format(unhealthy))
             apply_update = True
@@ -94,6 +97,7 @@ class BaseDemoController:
             active.add(ep)
             log.info("adding {} to the active lb list".format(ep))
             apply_update = True
+        self.active = active
         if apply_update:
             self.update_eds()
 
@@ -115,13 +119,6 @@ class BaseDemoController:
             yaml.dump(eds_response, output)
         with cd(os.path.dirname(self.eds_path)):
             shutil.move("new.yaml", os.path.basename(self.eds_path)) # envoy updates only triggered on a move
-#       with tempfile.TemporaryDirectory() as tmpdir:
-#           tmp_eds = os.path.join(tmpdir, "eds.yaml")
-#           dst_eds = os.path.join(os.path.dirname(self.eds_path), "new.yaml")
-#           with open(tmp_eds, "w") as output:
-#               yaml.dump(eds_response, output)
-#           subprocess.run("mv -Tf {} {}".format(tmp_eds, dst_eds), shell=True, check=True)
-#           #shutil.move(tmp_eds, self.eds_path) # envoy updates only triggered on a move
 
     def update_healthy(self):
         raise NotImplementedError()
@@ -136,6 +133,20 @@ class DockerComposeDemoController(BaseDemoController):
         self.healthy = {ep.hostname: ep for ep in endpoints}
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option("--daemon", is_flag=True)
+def demo(daemon):
     controller = DockerComposeDemoController()
-    controller.update()
+    if daemon:
+        s = sched.scheduler(time.time, time.sleep)
+        def loop():
+            controller.update()
+            s.enter(2, 1, loop)
+        s.enter(0, 1, loop)
+        s.run()
+    else:
+        controller.update()
+
+
+if __name__ == "__main__":
+   demo()
