@@ -22,7 +22,7 @@ static_resources:
 #                 prefix: "/"
                   headers:
                   - name: content-type
-                    value: application/grpc
+                    exact_match: application/grpc
                 route:
                   cluster: helloworld
           http_filters:
