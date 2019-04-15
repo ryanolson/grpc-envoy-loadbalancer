@@ -1,4 +1,4 @@
-FROM envoyproxy/envoy:latest
+FROM envoyproxy/envoy:v1.10.0
 
 RUN apt-get update && apt-get -q install -y --no-install-recommends \
     curl python3-pip
